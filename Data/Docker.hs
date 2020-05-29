@@ -29,6 +29,7 @@ module Data.Docker
        , As
        , Param
          -- * Docker Instructions
+       , comment
        , from
        , fromas
        , run
@@ -87,7 +88,8 @@ type As         = String
 -- exposed through combinator functions intended to be run from w/in
 -- `dockerfile` and similar functions.
 data Instruction
-  = From ImageName (Maybe As)
+  = Comment String
+  | From ImageName (Maybe As)
   | Run Script  -- File [ScriptParam]
   | Cmd [ ScriptFile ]
   | Label [(String, String)]
@@ -109,6 +111,7 @@ data Instruction
 
 prettyCmd :: Instruction -> String
 prettyCmd = \case
+    Comment s                      -> "# " ++ s
     From f mas                     -> "FROM " ++ f ++ maybe "" (" AS " ++) mas
     Run scr                        -> "RUN " ++ scr
     Cmd cmds                       -> "CMD " ++ show cmds
@@ -160,6 +163,11 @@ renderOpts :: DockerOpt a => [a] -> String
 renderOpts = unwords . fmap renderDockerOpt
 
 -- * Instructions
+
+-- | Add a comment to the Dockerfile. @"# "@ is automatically prepended
+-- to the comment.
+comment :: String -> Docker ()
+comment s = tell [ Comment s ]
 
 -- | The @FROM@ instruction initializes a new build stage and sets
 -- the Base Image for subsequent instructions. As such, a valid
